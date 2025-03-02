@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let moves = 0;
     let containerSize = 400; // Default size
     let pieceSize = containerSize / GRID_SIZE;
+    let gameStarted = false; // Flag to track if game has been shuffled
     
     // Adjust for smaller screens
     function adjustForScreenSize() {
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         moves = 0;
         movesCount.textContent = moves;
         emptyCell = { row: GRID_SIZE - 1, col: GRID_SIZE - 1 };
+        gameStarted = false;
         
         // Create puzzle pieces
         for (let row = 0; row < GRID_SIZE; row++) {
@@ -63,6 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Add click event
                 piece.addEventListener('click', () => {
+                    // Only allow moves if game has been shuffled
+                    if (!gameStarted) return;
+                    
                     const currentRow = parseInt(piece.getAttribute('data-row'));
                     const currentCol = parseInt(piece.getAttribute('data-col'));
                     movePiece(currentRow, currentCol);
@@ -159,14 +164,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        // Ensure the puzzle is actually shuffled and not in solved state
+        const isSolved = checkIfSolved();
+        if (isSolved) {
+            // If still in solved state, shuffle again
+            shufflePuzzle();
+            return;
+        }
+        
         // Reset moves counter after shuffling
         moves = 0;
         movesCount.textContent = moves;
+        gameStarted = true;
     }
     
-    // Check if the puzzle is solved
-    function checkWin() {
-        const isWin = pieces.every(piece => {
+    // Check if the puzzle is in solved state without showing alert
+    function checkIfSolved() {
+        return pieces.every(piece => {
             // Skip the empty piece in the win check
             if (piece.classList.contains('empty')) {
                 return true;
@@ -179,10 +193,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             return currentRow === originalRow && currentCol === originalCol;
         });
+    }
+    
+    // Check if the puzzle is solved and show win message
+    function checkWin() {
+        if (!gameStarted) return;
+        
+        const isWin = checkIfSolved();
         
         if (isWin) {
             setTimeout(() => {
                 alert(`Congratulations! You solved the puzzle in ${moves} moves!`);
+                gameStarted = false;
             }, 300);
         }
     }
